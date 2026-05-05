@@ -6,7 +6,7 @@ const { Server } = require("socket.io");
 const app = express();
 app.use(cors());
 
-// 🔥 HEALTH CHECK ROUTE (VERY IMPORTANT)
+// ✅ Health route
 app.get("/", (req, res) => {
   res.send("Server is running 🚀");
 });
@@ -20,7 +20,7 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("🟢 User connected:", socket.id);
+  console.log("User connected:", socket.id);
 
   socket.on("join-room", (roomId) => {
     socket.join(roomId);
@@ -36,16 +36,21 @@ io.on("connection", (socket) => {
     const sizeInBytes = (image.length * 3) / 4;
 
     if (sizeInBytes > 1024 * 1024) {
-      console.log("❌ Image too large");
+      console.log("Image too large");
       return;
     }
 
     socket.to(roomId).emit("receive-image", image);
   });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+  });
 });
 
+// ✅ IMPORTANT
 const PORT = process.env.PORT || 3001;
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
