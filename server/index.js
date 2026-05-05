@@ -6,6 +6,11 @@ const { Server } = require("socket.io");
 const app = express();
 app.use(cors());
 
+// 🔥 HEALTH CHECK ROUTE (VERY IMPORTANT)
+app.get("/", (req, res) => {
+  res.send("Server is running 🚀");
+});
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -17,39 +22,30 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("🟢 User connected:", socket.id);
 
-  // 🔥 Join Room
   socket.on("join-room", (roomId) => {
     socket.join(roomId);
-    console.log(`📦 ${socket.id} joined room: ${roomId}`);
   });
 
-  // 🔥 TEXT SEND
   socket.on("send-text", ({ roomId, text }) => {
     socket.to(roomId).emit("receive-text", text);
   });
 
-  // 🔥 IMAGE SEND (≤1MB check)
   socket.on("send-image", ({ roomId, image }) => {
     if (!image) return;
 
-    // Approx size check (base64 string length)
     const sizeInBytes = (image.length * 3) / 4;
 
     if (sizeInBytes > 1024 * 1024) {
-      console.log("❌ Image too large (>1MB)");
+      console.log("❌ Image too large");
       return;
     }
 
     socket.to(roomId).emit("receive-image", image);
   });
-
-  // 🔴 Disconnect
-  socket.on("disconnect", () => {
-    console.log("🔴 User disconnected:", socket.id);
-  });
 });
 
-// 🔥 Start Server
-server.listen(3001, "0.0.0.0", () => {
-  console.log("🚀 Server running on port 3001");
+const PORT = process.env.PORT || 3001;
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
